@@ -85,6 +85,9 @@ The outputs from east model are preprocessed in the following pipeline:
 
 	* The second algorithm is good for generating the docgen as it will merge the floating header with the header under it
 
+* get_row_cell: this sub function is exactly the same as “get_row” except it generate also a list contain contains dictionary for every box in the format 
+{“box”:<the coordinates>,”row_num”:< row number>, “col_num”:< col number>} for every box, and “get_row_cell” modify the “row_num” for every box, thus we now know where is the cell ( the information of the box) and in which row it’s in (the information of the “row_num”)
+* get_col_cell: takes the output list of dictionaries from “get_row_cell” and apply the same algorithm as “get_col” but it also modify the dictionary by adding the “col_num“ for every box 
 ---
 example 
 |             | ocotber     |               |
@@ -105,9 +108,7 @@ desgine 2 output
 
 
 ---
-	2.3. get_row_cell: this sub function is exactly the same as “get_row” except it generate also a list contain contains dictionary for every box in the format 
-{“box”:<the coordinates>,”row_num”:< row number>, “col_num”:< col number>} for every box, and “get_row_cell” modify the “row_num” for every box, thus we now know where is the cell ( the information of the box) and in which row it’s in (the information of the “row_num”).
- 	2.4. get_col_cell: takes the output list of dictionaries from “get_row_cell” and apply the same algorithm as “get_col” but it also modify the dictionary by adding the “col_num“ for every box 
+
 
 now we have for every cell in which row it’s inside and in which col it belongs to, with this 2 information we can generate the table.
 ## Phase 3 visualization 
