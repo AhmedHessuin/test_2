@@ -1,31 +1,21 @@
-<h1> OCR Handover 
-Summary 
+# OCR cell detection 
 
 
 
 
 
 Author: Ahmed Hussein Ahmed
+
 Supervisor: Hazem Mamdouh
+
   
-Table of Contents
-Installation	3
-Data	3
-Process on the data to get tables as image	3
-Train East	4
-Inference with east	4
-Post processing	4
-Phase 1 generating the cell box on the image	4
-Phase 2 getting rows and columns	5
-Phase 3 visualization	5
 
- 
 
-Installation 
+# Installation 
 
-	Downloading the data from IBM LINK
-	Click get this dataset 
-	For sample you can find it in run dataset notebooks  
+	Downloading the data from IBM [Link](https://developer.ibm.com/technologies/artificial-intelligence/data/fintabnet/)
+	Click get this [dataset](https://dax-cdn.cdn.appdomain.cloud/dax-fintabnet/1.0.0/fintabnet.tar.gz )
+	For sample you can find it in [run dataset notebooks](https://dataplatform.cloud.ibm.com/analytics/notebooks/v2/f57cf3f6-e972-48ff-ab7b-3771ba7b9683/view?access_token=317644327d84f5d75b4782f97499146c78d029651a7c7ace050f4a7656033c30)  
 
 	Extract the .tar file
 
