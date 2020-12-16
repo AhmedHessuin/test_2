@@ -81,6 +81,11 @@ output_p=/media/res12/30aa9699-51c5-4590-9aa2-decf88416771/OCR/OCR-table/EAST-ma
 * Note that we use 2 src paths because the model in table/line build is diffrent from the cell model
 * src folders for table/lines/main [src table/lines/main.py]()
 * src folder for cell [src cells]()
+
+2. in the directory of the  the [dockerizer.sh]() open the terminal and run
+```
+bash dockerize.sh pip-line
+```
 ---
 # Alogrithm Phases
 the algorithm is made of mainly 4 phases
