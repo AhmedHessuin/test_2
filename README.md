@@ -76,4 +76,4 @@ also have 5 layers in the current graph no less no more and with the same scope 
 return f1_score,f2_score
 ```
 * we are gonna use f1 in the loss function and ignore f2 for now, this will triger a breaking error biase name =None
-* to fix this we need to make sure that every layer is connected to output layer, and we are going to use this output layer in the loss function
+* to fix this we need to make sure that every layer is connected to output layer, and we are going to use this output layer in the loss function or we add flag **trainable=False** in the conv2d
