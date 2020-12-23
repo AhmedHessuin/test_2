@@ -21,7 +21,7 @@ create one model to predict the cells directly from a raw image not croped image
 3. [resnet.py]()
 ---
 
-# model basics 
+# slim basics 
 * we are using tensorflow slim that is in tensorflow old versions, can be installed with 
     ```
     !pip install git+https://github.com/google-research/tf-slim.git
