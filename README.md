@@ -26,18 +26,18 @@ create one model to predict the cells directly from a raw image not croped image
     ```
     !pip install git+https://github.com/google-research/tf-slim.git
     ```
-* slim conv2d has many attributes we can make all conv2d share this attributes with *slim.arg_scope* iinsted of writing this attributes every time
-* slim conv2d support layer name as *scope=*, with this we can generate layers with name like *scope=table_score_layer*
+* slim conv2d has many attributes we can make all conv2d share this attributes with **slim.arg_scope** iinsted of writing this attributes every time
+* slim conv2d support layer name as **scope=**, with this we can generate layers with name like **scope=table_score_layer**
 * slim conv2d will break if it found another layer with the same scope name 
-* we can make common scope name prefix  with *tf.variable_scope*
+* we can make common scope name prefix  with **tf.variable_scope**
 ---
 # creating the new model 
 ## modify on resnet
-* to use resnet 2 times in the code we need to change it's scope *scope='resnet_v1_50'* and *scope='resnet_v1_50_2'*
-* this will change the blocks inside resnet *scope name* but this not going to change the resnet endpoint scope name 
-* endpoints will have default name *'resnet_v1_50'* whatever is the *scope* we gave to our resnet 
+* to use resnet 2 times in the code we need to change it's scope **scope='resnet_v1_50'** and **scope='resnet_v1_50_2'**
+* this will change the blocks inside resnet **scope name** but this not going to change the resnet endpoint scope name 
+* endpoints will have default name **'resnet_v1_50'** whatever is the **scope** we gave to our resnet 
 * go to [resnet_v1.py]()
-    1. function *resnet_v1*
+    1. function **resnet_v1**
     2. change the endpoint name, to have the same scope name as the resnet scope name
    ``` 
    end_points['pool3'] = end_points[str(scope)+'/block1']
@@ -67,7 +67,7 @@ also have 5 layers in the current graph no less no more and with the same scope 
 
 ## create the new model
 * we can create another model now so easy, we just need to change the scope names inside the model
-* to connect the output from the base model and the created model we need to give the new model *input=f_score_table* for example
+* to connect the output from the base model and the created model we need to give the new model **input=f_score_table** for example
 * concatinate the input image with the f_score, but this will make 4 d tensor and resnet use 3 d tensor, thus apply conv2d with input dimensions = 3
 * continue building the model layers
 ## loss function
