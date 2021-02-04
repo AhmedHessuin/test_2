@@ -170,11 +170,10 @@ yield [images,training_masks,score_maps,geo_maps], [score_maps, geo_maps] # retu
 
 ```
 5. use_frezzed_model.py
-  1. load the frozen model 
-  2. now to predict with the frozen model, we can't use model.predict
-  3. we use another function to predict with the .pb model which require the data type to be np.float32
-  4. use the postprocessing from east tf 1.13.0
-  
+    1. load the frozen model 
+    2. now to predict with the frozen model, we can't use model.predict
+    3. we use another function to predict with the .pb model which require the data type to be np.float32
+    4. use the postprocessing from east tf 1.13.0
 6. predict.py
   * load the model and use model.predict
   * require the test data path and the ouput path 
