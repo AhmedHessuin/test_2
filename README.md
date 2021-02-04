@@ -38,7 +38,7 @@ pip install tensorflow-addons==0.10.0
     * the diffrenece between tf 1.13.0 to 2.3.0 was huge in the convolutional layers 
     * the conv2d in tf 1.13.0 was followed by padding (using tf.contrib.slim library) and in tf 2.3.0 the padding was removed
     * example for the issue 
-    ```
+```
     import tensorflow as tf 
     import tf_slim as tf_contrib_slim
     x=np.ones((1,5,5,3)) # the input
@@ -50,16 +50,16 @@ pip install tensorflow-addons==0.10.0
 
     print(output_v2.shape)
     print(output_v1.shape)
-    ```
+```
     * output
-    ```
+```
     (1, 3, 3, 10)
     (1, 5, 5, 10)
-    ```
+```
     * thus the whole model was changed by adding the padding value to match the east requiremnts for layers output WXHXC
   2. loss function
-    * this file contain the custom loss functions
-    ```
+    * this file contain the custom loss functions, taking more than
+```
         def loss(y_true_cls, y_pred_cls,
              y_true_geo, y_pred_geo,
              training_mask):
@@ -94,8 +94,7 @@ pip install tensorflow-addons==0.10.0
         L_g = L_AABB + 20 * L_theta
 
         return tf.reduce_mean(L_g * y_true_cls * training_mask) + classification_loss
-
-    ```
+```
     * using the same losses as tf 1.13.0 which were the dice lose for the F score and IOU for the geo map
     * the custom loss function required the geo_map true and the f_score true 
     * the normal custom loss functions which we use in combile faild, as it require only (true_label, predicted_label) and can't be given (true_label_1,true_label_2,predicted_label_1,predicted_label_2)
@@ -106,6 +105,7 @@ pip install tensorflow-addons==0.10.0
       created_model = tf.keras.Model(inputs=[images,training_mask_in,f_score_true,f_geometry_true], outputs=[F_score, F_geometry])
       ```
       2. add loss layer to the model
+        * by taking the extra input and the model output layers and apply some math over them, to compute the loss 
       ```
       custom_loss=loss(f_score_true,F_score,f_geometry_true,F_geometry,training_mask_in)
 
@@ -118,4 +118,40 @@ pip install tensorflow-addons==0.10.0
       ```
   4. in the training give the model 4 inputs insted of 1
 
+2. [train.py]()
+  * in this file we train the model
+  1. check for the gpu 
+```
+  physical_devices = tf.config.experimental.list_physical_devices('GPU')
+assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
+```
+  2. call backs 
+  * there are [ReduceLROnPlateau, ModelCheckpoint] to reduce the learning rate and the save model every epoch 
+  * custom call back [call_back_predict] to predict every epoch on sample of images to check the result of the model
   
+  3. optimizers 
+    * using adam optimizer 
+    * using tf-addons moving average over the adam optmizer ( in tf 1.13.0 we load the model then use moving average over it, to get better inference result, but now we generate the moving average while training)
+```
+opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
+opt = tfa.optimizers.MovingAverage(opt,average_decay=0.997)
+```
+
+  4. model fit with the icdar generator 
+```
+model.fit(icdar.generator(input_size=512,image_path="/media/res12/30aa9699-51c5-4590-9aa2-decf88416771/OCR/all_rdi_data/train_rdi_5000",batch_size=8),steps_per_epoch=625,epochs=250,use_multiprocessing=True,workers=24,callbacks=call_backs(),max_queue_size=100)
+```
+3. icdar.py 
+  * same as tf 1.13.0 
+  *  checking if the image is larger than 512 or no, if yes
+    * ***yes*** :
+      * crop the image and take part of it contain lines with making sure that, we don't split the line, if the line is 2 pixels width; ignore it
+      * generate the f score and the geo map for each image in the batch
+      * after making images = the batch size, give the model.fit the data to train
+```
+yield [images,training_masks,score_maps,geo_maps], [score_maps, geo_maps] # return the training images the score maps and the geo maps
+# note that we give it the training mask and score map geom map as input  because of the loss layer
+```
+
+4.
