@@ -1,40 +1,121 @@
-# lline_detection_backbone_efficientnet_B0_B4
-# Author 
+# new models with tensorflow version 2.3.0 
 ### ahmed hussein ahmed 
 ---
 
 ---
 # problem defination 
-create new backbone model for EAST
+create new model with tensorflow(tf) version(v) 2.3.0 and modify inference and the training files
 ---
 # solution
-Create efficientnet B0 and B4(modified B4) models and try them as backbone
+* update all files used in [east]() to work with tf v2.3.0
+* update the enviroment 
+* update icdar files for training 
 ---
 # Requirments
-* [East Requirments]()
+* tf v 2.3.0  
+* tensorflow-addons-0.10.0 or tensorflow-addons-0.11.2
+* opencv 4.4.0.46
+* numpy 1.18.5
+* python 3.8
+* cuda 10.1
 --- 
-# Steps
-* following the [paper](https://arxiv.org/pdf/1905.11946.pdf)
-* create the new model with tensorflow.contrib.slim (tf_slim), tf.v1.4
-* the paper descripe the idea of creating larger models from small models, by increasing 
-   * the width(number of filter)
-   * the resolution(input shape like [224,224,3])
-   * the depth(number of layers )
-   * all of them in the same time, using the equations in the paper 
-   
-* themodel use less parameters than resnet 50 and 30 but it use more computaional power (the depthwise covolution layers)
-* this implmentation used rely as activation following the paper archtecture for B0 and modifying it to B4 using the paper equations
-* B0, B0 is modification on [mnasnet](https://arxiv.org/pdf/1807.11626.pdf)
-![](https://media.discordapp.net/attachments/773272559688613888/796541804806930432/image2.png)
-* more information about 
-![](https://media.discordapp.net/attachments/773272559688613888/796087537285595176/unknown.png?width=618&height=670)
-![](https://media.discordapp.net/attachments/773272559688613888/796046574094254090/The-composition-of-MBConvs-From-left-a-d-M-BConvK-K-B-S-in-EfficientNets.png)
+# enviroment setup 
+1. copy the directory [setup enviroment](sftp://research_ninja@192.168.1.137/home/research_ninja/OCR/line_detection/tensorflow_v2/tensorflow_2.3.0/Cuda-Cudnn-Conda-TF_Freshh_installation) to your work directory
+2. run the bash installation.sh in the [setup enviroment](sftp://research_ninja@192.168.1.137/home/research_ninja/OCR/line_detection/tensorflow_v2/tensorflow_2.3.0/Cuda-Cudnn-Conda-TF_Freshh_installation)
+```
+bash installation.sh
+```
+3. install the tensorflow-addons vesion 0.10.0
+```
+pip install tensorflow-addons==0.10.0
+```
 
----
-# model creation 
-* apply the model in the paper and return 5 layers
-   * each layer of the 5 is the output before stride using the same idea as [East](https://media.discordapp.net/attachments/773272559688613888/799038465697120317/unknown.png)
-   * for example if we have group of layers operate in dimensions 14x14 made of 6 layers return only the last layer contain 14x14 then apply the next layer with down sample and create 7x7 input dimesnion and do the same as 14 x 14
-# results 
-* checking this [sheet](https://docs.google.com/spreadsheets/d/1VHkFAnUFOxGdn3MSiVXjnZvXfK2WaLiN-H8gXJ2U8Gc/edit#gid=824382746)
-* best output was on B0
+# files descriptions 
+* donwload the directory for the base line [base line refactor tf 2.3.0](sftp://research_ninja@192.168.1.137/home/research_ninja/OCR/line_detection/tensorflow_v2/tensorflow_2.3.0/baseline)
+
+1. [effientmodel.py]() this file contain the east model with resnet and effiecntnet b0 model
+  1. model layers
+    * the diffrenece between tf 1.13.0 to 2.3.0 was huge in the convolutional layers 
+    * the conv2d in tf 1.13.0 was followed by padding (using tf.contrib.slim library) and in tf 2.3.0 the padding was removed
+    * example for the issue 
+    ```
+    import tensorflow as tf 
+    import tf_slim as tf_contrib_slim
+    x=np.ones((1,5,5,3)) # the input
+    stride=1
+    filter=10
+    kernal=3
+    output_v2=tf.keras.layers.Conv2D(filter,kernal,stride)(x)
+    output_v1=tf_contrib_slim.layers.conv2d(x,filter,kernal,stride)
+
+    print(output_v2.shape)
+    print(output_v1.shape)
+    ```
+    * output
+    ```
+    (1, 3, 3, 10)
+    (1, 5, 5, 10)
+    ```
+    * thus the whole model was changed by adding the padding value to match the east requiremnts for layers output WXHXC
+  2. loss function
+    * this file contain the custom loss functions
+    ```
+        def loss(y_true_cls, y_pred_cls,
+             y_true_geo, y_pred_geo,
+             training_mask):
+        '''
+        define the loss used for training, contraning two part,
+        the first part we use dice loss instead of weighted logloss,
+        the second part is the iou loss defined in the paper
+        :param y_true_cls: ground truth of text
+        :param y_pred_cls: prediction os text
+        :param y_true_geo: ground truth of geometry
+        :param y_pred_geo: prediction of geometry
+        :param training_mask: mask used in training, to ignore some text annotated by ###
+        :return:
+        '''
+        classification_loss = dice_coefficient(y_true_cls, y_pred_cls, training_mask)
+        # scale classification loss to match the iou loss part
+        classification_loss *= 0.01
+
+        # d1 -> top, d2->right, d3->bottom, d4->left
+        d1_gt, d2_gt, d3_gt, d4_gt, theta_gt = tf.split(value=y_true_geo, num_or_size_splits=5, axis=3)
+        d1_pred, d2_pred, d3_pred, d4_pred, theta_pred = tf.split(value=y_pred_geo, num_or_size_splits=5, axis=3)
+        area_gt = (d1_gt + d3_gt) * (d2_gt + d4_gt)
+        area_pred = (d1_pred + d3_pred) * (d2_pred + d4_pred)
+        w_union = tf.minimum(d2_gt, d2_pred) + tf.minimum(d4_gt, d4_pred)
+        h_union = tf.minimum(d1_gt, d1_pred) + tf.minimum(d3_gt, d3_pred)
+        area_intersect = w_union * h_union
+        area_union = area_gt + area_pred - area_intersect
+        L_AABB = -tf.compat.v1.log((area_intersect + 1.0) / (area_union + 1.0))
+        L_theta = 1 - tf.cos(theta_pred - theta_gt)
+        # tf.summary.scalar('geometry_AABB', tf.reduce_mean(L_AABB * y_true_cls * training_mask))
+        # tf.summary.scalar('geometry_theta', tf.reduce_mean(L_theta * y_true_cls * training_mask))
+        L_g = L_AABB + 20 * L_theta
+
+        return tf.reduce_mean(L_g * y_true_cls * training_mask) + classification_loss
+
+    ```
+    * using the same losses as tf 1.13.0 which were the dice lose for the F score and IOU for the geo map
+    * the custom loss function required the geo_map true and the f_score true 
+    * the normal custom loss functions which we use in combile faild, as it require only (true_label, predicted_label) and can't be given (true_label_1,true_label_2,predicted_label_1,predicted_label_2)
+  3. custom loss issue solution
+    * ***using the loss function as a part of the model***
+      1. add 3 more input layers to the model name them as f_score_true, f_geometry_true,training_mask_in (note that we give the loss extra parameters)
+      ```
+      created_model = tf.keras.Model(inputs=[images,training_mask_in,f_score_true,f_geometry_true], outputs=[F_score, F_geometry])
+      ```
+      2. add loss layer to the model
+      ```
+      custom_loss=loss(f_score_true,F_score,f_geometry_true,F_geometry,training_mask_in)
+
+      created_model.add_loss(custom_loss)
+      ```
+        * note that now the model take 4 parameters insted of 1 and return 2 outputs F_score and F_geometry 
+      3. combile the model with out giving it any loss 
+      ```
+      model.compile(optimizer=opt)
+      ```
+  4. in the training give the model 4 inputs insted of 1
+
+  
