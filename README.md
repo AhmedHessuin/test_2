@@ -33,7 +33,7 @@ pip install tensorflow-addons==0.10.0
 # files descriptions 
 * donwload the directory for the base line [base line refactor tf 2.3.0](sftp://research_ninja@192.168.1.137/home/research_ninja/OCR/line_detection/tensorflow_v2/tensorflow_2.3.0/baseline)
 
-1. [effientmodel.py]() this file contain the east model with resnet and effiecntnet b0 model
+1. effientmodel.py this file contain the east model with resnet and effiecntnet b0 model
   1. model layers
     * the diffrenece between tf 1.13.0 to 2.3.0 was huge in the convolutional layers 
     * the conv2d in tf 1.13.0 was followed by padding (using tf.contrib.slim library) and in tf 2.3.0 the padding was removed
@@ -119,7 +119,7 @@ model.compile(optimizer=opt)
 ```
   4. in the training give the model 4 inputs insted of 1
 
-2. [train.py]()
+2. train.py
   * in this file we train the model
   1. check for the gpu 
 ```
@@ -139,7 +139,7 @@ opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
 opt = tfa.optimizers.MovingAverage(opt,average_decay=0.997)
 ```
 
-  4. model fit with the icdar generator 
+  4. model fit with the icdar generator, note the max_queue_size to speed up the train 
 ```
 model.fit(icdar.generator(input_size=512,image_path="/media/res12/30aa9699-51c5-4590-9aa2-decf88416771/OCR/all_rdi_data/train_rdi_5000",batch_size=8),steps_per_epoch=625,epochs=250,use_multiprocessing=True,workers=24,callbacks=call_backs(),max_queue_size=100)
 ```
@@ -183,4 +183,9 @@ yield [images,training_masks,score_maps,geo_maps], [score_maps, geo_maps] # retu
   * the global variable take the 4 outputs required in east 
 8. resnet_output_layer.py 
   * contain 1 global variable, this variable has the 4 output layers ( the output from every stide group) and use this variable in effiecnetmodelb0.py to connect the resnet with east
-  
+9. epoch_pred_image
+  * contain images to inference on epoch end 
+10. epoch_pred_image_out
+  * contain the output pred after every epoch 
+11. mask_out
+  * optional can be find in icdar.py generatory, mainly used to dumb the masks on the desk in the mask_out directory, comment it if you are going to train and speed up the train
