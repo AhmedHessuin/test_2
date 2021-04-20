@@ -1,5 +1,6 @@
 # DEEPLEARNING REGIONER USING YOLOV5
 ### ahmed hussein ahmed 
+---
 ## problem difination
 * rule based regioner not good enough for future experiments and not stable with all images (using threshold leads to unstable output)
 # solution
@@ -12,7 +13,8 @@
 * numpy 1.18.5
 * python 3.8
 * cuda 10.1
-* [yolov5 tf requriments]()
+* [yolov5 tf requriments](https://github.com/zldrobit/yolov5)
+* [yolov5 requriments](https://github.com/ultralytics/yolov5)
 --- 
 # Descriptions 
 * using yolov5 small model to generate labels on the input image to classify the context into one or more of  the incoming labels
@@ -51,7 +53,7 @@
 ## page header
 * is the paper header most likley  the largest line on paper (not a simple input image), it contain the paper name and the page number (can be removed later)
 * example![](https://media.discordapp.net/attachments/780088906972397578/833927663508258831/unknown.png?width=455&height=637)
-
+---
 # the benefits from the label system
 * the benefits from the labels system can be seen in block sorting, as in papers or normal images the labels are sorted by
 * for each par 
@@ -69,3 +71,8 @@
 * can be used on arabic or english data directly no need to give the language as input ( helpful in case of sorting with out recognition)
 # constrains
 * need a large amount of labeled data
+# code 
+* using the [yolov5 instruction](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data)  for training 
+* using the [yolov5 instruction](https://github.com/ultralytics/yolov5#inference) for inference
+* using the [yolov5 instruction](https://github.com/ultralytics/yolov5/issues/607) for hyperparameters
+* using the [elezaby repo for generating the tf model]()
