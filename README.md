@@ -1,204 +1,90 @@
 # Detectron 2
-
+## main repo
+detectron2  [git repo](https://github.com/facebookresearch/detectron2)
+detectron2 [read doc](https://detectron2.readthedocs.io/en/latest/)
 ## table on contents 
 1. installation 
 2. train
 
 ## installation 
-1. detectron2  [git repo](https://github.com/facebookresearch/detectron2)
-2. install detectron2 [pre-built](https://detectron2.readthedocs.io/en/latest/tutorials/install.html), this is the main detectron 2 librar based on your cuda and pytorch
-3. [colab tutorial for installation](https://colab.research.google.com/drive/16jcaJoc6bCFAQ96jDe2HwtXj7BMD_-m5)
-
+1. create the enviroment ```conda create -n NIDR python=3.8```
+2. activate the enviroment ```conda activate NIDR```
+3. you need to download the pre-built version from [the directory model](https://github.com/facebookresearch/detectron2/releases) for example use v0.4 with cuda 10.2 and torch 1.8, example:```python -m pip install detectron2==0.4 -f \
+  https://dl.fbaipublicfiles.com/detectron2/wheels/cu102/torch1.8/index.html```
+4. download the cuda version ```conda install cudatoolkit=10.2```
+5. download other requirments in ```requirments.txt```
+* **Now the enviroment is all set**
+  
+---
+ 
 
 ## train 
-* to train with detectron 2 you need to generate the data with 
-1. x1,y1,x2,y2,x3,y3,x4,y4 the four corner points 
- 1. the 4 corner get represinted as mask and anchor boxes, this is done inside the detectron2 code
-2. the train data must have labels start from index 0, if you tried to have train data with labels [1,2,3] this will fail, change it to [0,1,2]
+* first you need to understand the model format as in the [readme](https://detectron2.readthedocs.io/en/latest/tutorials/models.html#model-input-format)
+* our model format will be descriped in the training script
 
-
-## train explaination
-
-* generate the data in the code
-1. pass the data directory
-2. the "train_2" is a directory, contain folders ["front","back","back_new","front_new","non"] each folder cotain image and text data
-3. we need to register the training data in the **datacatalog and metacatalog** as followed 
-4. the **get_docs_dicts** get the training data path in our example "data_dir/train_2"
-5. the **metacatalog** contain the classes in the training dataset 
-**CRITICAL NOTE** : the register data name and metacatalog name must be the same, and also in the model cfg
-
+## train labels 
+* training data folder must contain
+1. image : the target image we want to train on
+2. text : the target text contain object
+* for each image there must be a text file with the same name
+* each text file must contain objects as descriped for each line 
+1. coordinates as [top left x, top left y, top right x, top right y, bootom right x, bottom right y, bottom left x, bottom left y]
+2. label for the object 
+3. example with object contain label 4: ``` 0,10,10,10,10,100,0,100,4```
+4. for real case for example 
 ```
-data_dir = '/media/res12/30aa9699-51c5-4590-9aa2-decf88416771/OCR/OCR-ID-Reader'
-
-for d in ["train_2"]:
-    DatasetCatalog.register("data_" + "train_2", lambda d=d: get_docs_dicts(data_dir+"/" + d))
-    MetadataCatalog.get("data_" + d).set(thing_classes=["front_id", "front_gomhorya", "front_beta2a", "front_name_1", "front_name_2", "front_3enwan_1", "front_3enwan_2", "front_rakmqawmi", "front_sora", "front_tarekh", "front_fcn",
-                                                        "back_id", "back_rakmqawmi", "back_tarekh_sodor", "back_wazefa_1", "back_wazefa_2", "back_gender" , "back_religion", "back_marital" , "back_esm_zog", "back_rakm", "back_tarekh_entha2",
-                                                        "non"
-                                                        ])
+0,10,10,10,10,100,0,100,4
+5,15,15,15,15,105,5,105,5
 ```
-* continue generating the data 
-1. this function contain the loading of images and the labels
-2. we have 5 folders each folder represint class ["front","back","non","front_new","back_new"]
-3. for each class load it alone, note this consume alot of time due to the large amount of training data
-4. the data must be put into something called record, a dictionary datatype
-5. record cotntain the full path of the training sample in **file_name**
-6. record contain the image_id as a unique flage for each image in **image_id**
-7. record contain the image height in **height**
-8. record contain the image width in **width**
-9. record contain the anchor boxes and the class of each anchor in **annotations**
-10. this keys can be filled as follow
+5. the training labels for the model must start with index 0 otherwise it will generate an error
+## train function
+### main()
+* this function contain the main process which will be given to the gpus for training 
+
+
+
+### mapper2(dataset_dict)
+* this function contain the augment generator function and method, if you want to add augmentation modify this function
+```    '''
+    the mapper used to augment and process the data before feeding it to the detectron2
+    it work in online behaviour, you can write on disk the augmented image or do anything else as you can
+    but you need to feed the model with the expected data type
+    :param dataset_dict: dictionary from the list of dict (list[dict]) that we generated for the model
+    :return: a dict contain what model expected to train on
+    '''
 ```
-def get_docs_dicts(img_dir):
-
-    clss = ["front","back","non","front_new","back_new"]
-    dataset_dicts = []
-
-    for cls_id, cls_dir  in enumerate(clss):
-        print(cls_dir)
-        files = os.listdir(os.path.join(img_dir,cls_dir))
-
-        files = [file for file in files if file.split(".")[-1] not in ["txt","csv"]]
-
-        for idx, fn in enumerate(files):
-            #print(idx, sep=" ")
-            try:
-
-                record = {}
-
-                filename = os.path.join(img_dir, cls_dir,fn.split(".")[0]+".txt")
-
-                with open(filename, "r") as f:
-                    lines = f.readlines()
-
-                new_lines = []
-                for line in lines:
-                    line = line.strip().split(",")
-                    new_lines.append(line)
-
-                height, width = cv2.imread(os.path.join(img_dir,cls_dir,fn)).shape[:2]
-
-                record["file_name"] = os.path.join(img_dir,cls_dir,fn)
-                record["image_id"] = str(cls_id)+"_"+str(idx)
-                record["height"] = height
-                record["width"] = width
-                objs = []
-                for ann in new_lines:
-                    px = [float(ann[0]),float(ann[2]),float(ann[4]),float(ann[6]) ]
-                    py = [float(ann[1]),float(ann[3]),float(ann[5]),float(ann[7]) ]
-                    el_id = int(float(ann[8]))
-                    el_id = class_map[clss[cls_id]][el_id]
-
-                    poly = [(x , y) for x, y in zip(px, py)]
-                    poly = [p for x in poly for p in x]
-                    #print(poly)
-                    obj = {
-                        "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
-                        "bbox_mode": BoxMode.XYXY_ABS,
-                        "segmentation": [poly],
-                        "category_id": el_id,
-                    }
-                    objs.append(obj)
-                record["annotations"] = objs
-                dataset_dicts.append(record)
-            except Exception as e:
-                print("e :",e)
-                print("eception")
-                continue
-    print(dataset_dicts)
-    return dataset_dicts
+### class Trainer(DefaultTrainer)
+* this class inhert from the detectron2 [DefaultTrainer](https://github.com/facebookresearch/detectron2/blob/51704141a5e6d92136c6df1cc2728aedcef9885f/docs/tutorials/training.md), we modify only on the part where we build the trainer ```def build_train_loader(cls, cfg)```
+``` We use the "DefaultTrainer" which contains a number pre-defined logic for
+    standard training workflow. They may not work for you, especially if you
+    are working on a new research project. In that case you can use the cleaner
+    "SimpleTrainer", or write your own training loop.
 ```
 
 
-* creating the model 
-1. to create the model we must get the registerd training data, note the register data name same as the created name while generating the training samples
+### cache_training_data(data,resume=False,cache_name="cache")
+* this is used to dumb or load the training data for the model
+```    '''
+    to save time for loading the training data we create the cache contain list[ dicts {} ] that generated
+    for the training
+    :param data: the list of dict contain the infromation the model need
+    :param resume: resume the training or no, if yes just load the data, else create the data and return it
+    :param cache_name: the name of the cache by default it's cache
+    :return: the training data for th e model from cach file
+    '''
 ```
-doc_metadata = MetadataCatalog.get("data_train_2")
-```
-2. create a cfg for the model
-
-
-** model cfg
-* cfg contain all information about the model, each line will be commented for farther information
-* you can print the **cfg** after creating it, and if you want to modify anything just use **cfg.THE_THING_NAME.THE_ATTRIBIUTE= whatever i want** 
-```
-cfg = get_cfg() # get the default configuration
-cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")) # get the masrk rcnn R 50 fpn 3x backbone
-cfg.DATASETS.TRAIN = ("data_train_2",)# get the train data (data_train_2) same as registered data
-cfg.DATASETS.TEST = ()# no data for test
-cfg.DATALOADER.NUM_WORKERS = 16# number of workers 
-
-cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo from coco, for fast training
-cfg.SOLVER.IMS_PER_BATCH = 4 # batch size
-
-#######################
-cfg.INPUT.MIN_SIZE_TRAIN = (300,) # min input size
-# Sample size of smallest side by choice or random selection from range give by
-# INPUT.MIN_SIZE_TRAIN
-cfg.INPUT.MIN_SIZE_TRAIN_SAMPLING = "choice"
-# Maximum size of the side of the image during training
-cfg.INPUT.MAX_SIZE_TRAIN = 1024
-# Size of the smallest side of the image during testing. Set to zero to disable resize in testing.
-cfg.INPUT.MIN_SIZE_TEST = 300
-cfg.INPUT.MAX_SIZE_TEST = 1024
-
-###########################################
-
-
-#cfg.MODEL.BACKBONE.DEPTH = 18
-#cfg.MODEL.RESNETS.DEPTH = 18
-#cfg.MODEL.RESNETS.RES2_OUT_CHANNELS = 64
-
-#####################################
-
-cfg.MODEL.ROI_BOX_HEAD.CONV_DIM = 64
-
-cfg.MODEL.ROI_MASK_HEAD.CONV_DIM = 64
-
-
-###################################
-
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 32# the roi heads is a hyper paramerter, for the mask rcnn this is a special hyper
-# cfg.MODEL.ROI_HEADS.POSITIVE_FRACTION=0.25 # the roi head positiva fraction is a hyper parameter for the mask rcnn
-
-cfg.MODEL.RPN.BATCH_SIZE_PER_IMAGE = 32 
-
-cfg.MODEL.RPN.PRE_NMS_TOPK_TRAIN = 500
-cfg.MODEL.RPN.PRE_NMS_TOPK_TEST = 200
-cfg.MODEL.RPN.POST_NMS_TOPK_TRAIN = 200
-cfg.MODEL.RPN.POST_NMS_TOPK_TEST = 50
-# NMS threshold used on RPN proposals
-cfg.MODEL.RPN.NMS_THRESH = 0.7
-
-#####################################
-cfg.SOLVER.BASE_LR = 0.001 # the learning rate 
-cfg.SOLVER.MAX_ITER = 300100    # number of iterations
-cfg.SOLVER.STEPS = []        # do not decay learning rate
-#cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # faster, and good enough for this toy dataset (default: 512)
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 23  # number of classes 
-cfg.MODEL.SEM_SEG_HEAD.NUM_CLASSES = 23 # number of classes
-cfg.SOLVER.CHECKPOINT_PERIOD = 10000 # checkpoint saver
-#cfg.MODEL.WEIGHTS = os.path.join( "output", "model_final.pth")  # path to the last model you trained , this will load the weight and resume training if you want to resume
-# NOTE: this config means the number of classes, but a few popular unofficial tutorials incorrect uses num_classes+1 here.
-cfg.MODEL.ANCHOR_GENERATOR.ASPECT_RATIOS = [[0.25, 0.5, 1.,2,2.5]] # the anchor generator, generate boxes with ratio 0.25  between height and width,  the generated anchors by default rotate only 90 -90
-cfg.MODEL.ANCHOR_GENERATOR.SIZES= [[8], [16], [32], [64], [128]] # the anchor boxes size this reflect to the size of the training data 
-
-cfg.MODEL.DEVICE = 'cuda' # use cuda not cpu
-print(cfg)
-
-print("------------------")
-
-print("start train")
-
-cfg.OUTPUT_DIR = "output_hussien/stable_8_16_32_64_128_V3_2/" # the output directory of the model
-```
-## start the train
-* now we can start the train just by 
+### get_docs_dicts(img_dir,resume)
+* this is the main function for loading the training data for the model, for our case we have the target folders **front, back, non** this function get the directory contain the 3 folders.
+* this function expect each directory to contain image and text file represent the image objects inside it
+```        '''
+        get the training data for the models as list contain dictionary contain the information the model need to
+        start the train.
+        :param img_dir:  main dir contain the [front back non] folders
+        :param resume: take the dta from te cache or create it
+        :return: the list contain the training data dict
+        '''
 ```
 
-trainer = DefaultTrainer(cfg)
 
-trainer.resume_or_load(resume=False)
-
-trainer.train()
-```
+ 
+ 
