@@ -25,14 +25,7 @@ let's start with the config file
 | side_system  | if we have a side label system or no, side label system is like ID, DL, BR and so on, non side system is like first name, family name and the fields directly inside the image or in IDB, this key represent one thing, for rotation and flipping we consider the fields to the side field we found for example the boundary of the ID, with no label system we consider the fields to the whole image itself | boolean  | true  | this field is most likely be used with rotation and flipping  |
 |input_size_min_max  | the expected model input shape  | list contain int  | [300,1024]  | -  |
 | trans_height_trans_width  | the warpped card dimensions height then width for each side label  |  dictionary key[number]:value[list of ints] |"0": [ 300,500],"10":[300,500] |-|
-| Content Cell  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
+| out_border_threshold | when we have a side label system, we expect the side label fields to be inside the label field, example: the first name is inside the id boundary box, but sometimes it can be outside the boundary of the label field, so we define a threshold if the sidelabel field is outside the label field by value more than this threshold in left or top or right or bottom we ignore this field  | dictionary key[number]:value[list of ints]   |   "0": [ 10,10,10,10], | this field is useless if we have side label system as false  |
+| field_height_width_threshold  | we define some threshold for each field, the height and the width for this field, if the field is smaller than this threshold we ignore this field   | dictionary key[number]:value[list of ints]  |     "0": [ 5,5], | if we don't care just put this value as -1  |
+| card_horz_vert_type | we consider the rotation on the cards 0 or 90 based on the label side width and height, to make sure that the CM is working with Horz or Vert side labels, we can set this Key to be 1 if we consider the default that the width > height and -1 if we consider that the default height > width  | dictionary key[number]:int   | "0": -1,"10": 1  | -  |
 
-
-
-
-
-trans_height_trans_width
-out_border_threshold
-field_height_width_threshold
-card_horz_vert_type
