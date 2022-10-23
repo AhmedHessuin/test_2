@@ -21,16 +21,17 @@ let's start with the config file
 | target_list  | for each side we may have somefields we don't want to save in the final output, thus in this Key any field found will be saved in the output otherwise we will ignore saving it in the output | dictionary key[number]:value[list of ints]   | "0": [ 1,2 ],"5":[6,7,]  | if you don't have a side, you can put all fields inside all fields, example : "0":[0,1,2,3,4,5],"1":[0,1,2,3,4,5],..."5":[0,1,2,3,4,5]  |
 | template_list  | for some sides we have a template for fields inside this side, so we put the expected location in the warped image in this Key, if we didn't find the target field, we search for it in this template  |  dictionary key[number]:value[list of ints]  | "1" :[185.0, 115.0, 314.0, 131.0] ,"2" :[115.0, 180.0, 295.0, 205.0],... "x":[x1,y1,x2,y2]  |  -  |
 | template_list_bool  | boolean for template list, if we this field in the target list, put we don't have template for this field, we can put the value = false which mean ignore template for this field, true means we have a template for this field  | dictionary key[number]:value[boolean]  | "0": false,  "1": false,"2": true,  | - |
+| multi_label_instances  | if we have a field that we found more than 1 time, we have 2 options, take only one with the heights confidance, take the two of them, to save the two of them expected value is true, to take high confidance expected value is false  | boolean  | true  | note that effect on the rotation and fliping, if you expect to find this field more than one time, don't use it in flip or rotation except they will have the same idea of top bottom view  |
+| side_system  | if we have a side label system or no, side label system is like ID, DL, BR and so on, non side system is like first name, family name and the fields directly inside the image or in IDB, this key represent one thing, for rotation and flipping we consider the fields to the side field we found for example the boundary of the ID, with no label system we consider the fields to the whole image itself | boolean  | true  | this field is most likely be used with rotation and flipping  |
+|input_size_min_max  | the expected model input shape  | list contain int  | [300,1024]  | -  |
+| trans_height_trans_width  | the warpped card dimensions height then width for each side label  |  dictionary key[number]:value[list of ints] |"0": [ 300,500],"10":[300,500] |-|
+| Content Cell  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
 | Content Cell  | Content Cell  | Content Cell  | Content Cell  | Content Cell  |
 
 
 
 
 
-
-multi_label_instances
-side_system
-input_size_min_max
 trans_height_trans_width
 out_border_threshold
 field_height_width_threshold
